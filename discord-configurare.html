@@ -174,7 +174,45 @@
       document.getElementById('setup-status').textContent='Fișierul Supabase a fost generat. Încarcă-l în folderul js din GitHub.';
     });
     const rolesHost=document.getElementById('roles');
-    rolesHost.innerHTML=roles.map(([name,level])=>`<div class="role-row"><span class="role-level" title="Nivel acces">${level}</span><input id="panel_role_${level}" required value="${name}" placeholder="Denumire afișată în panel" title="Denumire afișată în panel"><input id="role_name_${level}" required value="${name}" placeholder="Nume rol Discord" title="Nume rol Discord"><input id="role_${level}" required inputmode="numeric" placeholder="ID rol Discord" title="ID rol Discord"></div>`).join('');
+    rolesHost.innerHTML=roles.map(([name,level])=>`
+    <div class="role-row">
+
+    <span class="role-level" title="Nivel acces">${level}</span>
+
+    <input 
+    id="panel_role_${level}" 
+    required 
+    value="${name}" 
+    placeholder="Denumire afișată în panel" 
+    title="Denumire afișată în panel">
+
+    <input 
+    id="role_name_${level}" 
+    required 
+    value="${name}" 
+    placeholder="Nume rol Discord principal" 
+    title="Nume rol Discord principal">
+
+    <input 
+    id="role_${level}" 
+    required 
+    inputmode="numeric" 
+    placeholder="ID rol Discord principal" 
+    title="ID rol Discord principal">
+
+    <input 
+    id="role_name_secondary_${level}" 
+    placeholder="Nume rol Discord secundar (opțional)" 
+    title="Nume rol Discord secundar">
+
+    <input 
+    id="role_secondary_${level}" 
+    inputmode="numeric" 
+    placeholder="ID rol Discord secundar (opțional)" 
+    title="ID rol Discord secundar">
+
+    </div>
+    `).join('');
     async function invoke(body){const token=localStorage.getItem('discord_access_token');if(!token)throw new Error('Sesiunea Discord lipsește. Autentifică-te din nou.');const response=await fetch(`${SUPABASE_URL}/functions/v1/manage-discord-config`,{method:'POST',headers:{'Content-Type':'application/json',apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`},body:JSON.stringify({...body,access_token:token})});const result=await response.json();if(!response.ok)throw new Error(result.error||'Operațiunea a eșuat.');return result}
     const updateRedirectPreview=()=>{const base=document.getElementById('panel_public_url').value.trim().replace(/\/$/,'');document.getElementById('oauth_redirect_preview').value=base?`${base}/login.html`:''};
     document.getElementById('panel_public_url').addEventListener('input',updateRedirectPreview);
@@ -232,6 +270,8 @@
             const idInput = document.getElementById(`role_${mapping.permission_level}`);
             const nameInput = document.getElementById(`role_name_${mapping.permission_level}`);
             const panelInput = document.getElementById(`panel_role_${mapping.permission_level}`);
+            const secondaryIdInput = document.getElementById(`role_secondary_${mapping.permission_level}`);
+            const secondaryNameInput = document.getElementById(`role_name_secondary_${mapping.permission_level}`);
 
             if (idInput)
                 idInput.value = mapping.discord_role_id || '';
@@ -241,6 +281,12 @@
 
             if (panelInput)
                 panelInput.value = mapping.panel_role || mapping.discord_role_name || `Grad / Rol ${mapping.permission_level}`;
+
+            if (secondaryIdInput)
+                secondaryIdInput.value = mapping.discord_role_id_secondary || '';
+
+            if (secondaryNameInput)
+                secondaryNameInput.value = mapping.discord_role_name_secondary || '';
 
         });
 
@@ -331,9 +377,21 @@
             document.getElementById('role_1').value.trim();
 
         const mappings = roles.map(([, level]) => ({
-            discord_role_id: document.getElementById(`role_${level}`).value.trim(),
-            discord_role_name: document.getElementById(`role_name_${level}`).value.trim(),
-            panel_role: document.getElementById(`panel_role_${level}`).value.trim(),
+            discord_role_id:
+                document.getElementById(`role_${level}`).value.trim(),
+
+            discord_role_name:
+                document.getElementById(`role_name_${level}`).value.trim(),
+
+            discord_role_id_secondary:
+                document.getElementById(`role_secondary_${level}`).value.trim(),
+
+            discord_role_name_secondary:
+                document.getElementById(`role_name_secondary_${level}`).value.trim(),
+
+            panel_role:
+                document.getElementById(`panel_role_${level}`).value.trim(),
+
             permission_level: level
         }));
 
