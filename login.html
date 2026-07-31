@@ -215,62 +215,67 @@
             window.location.href = discordAuthUrl;
         });
 
-        document.addEventListener('DOMContentLoaded', async () => {
-            const hash = window.location.hash;
-            
-            // Dacă avem token în hash (venit de la Discord)
-            if (hash && hash.includes('access_token')) {
-                const params = new URLSearchParams(hash.substring(1));
-                const accessToken = params.get('access_token');
-                const oauthState = params.get('state');
+document.addEventListener('DOMContentLoaded', async () => {
 
-                // Loginul Android folosește pagina web drept callback aprobat de Discord,
-                // apoi revine în aplicație prin schema mobilă înregistrată în Android.
-                if (accessToken && oauthState === 'panel_android') {
-                    // Fragmentele URL (#...) pot fi eliminate de Android la deschiderea
-                    // unei aplicații. Mutăm temporar valorile în query string.
-                    const mobileParams = new URLSearchParams();
-                    ['access_token', 'token_type', 'expires_in', 'scope', 'state'].forEach(key => {
-                        const value = params.get(key);
-                        if (value) mobileParams.set(key, value);
-                    });
-                    const appCallback = `discord-1531023771211792384:/authorize/callback?${mobileParams.toString()}`;
-                    const loginButton = document.getElementById('discord-login-btn');
-                    const returnButton = document.createElement('a');
-                    returnButton.href = appCallback;
-                    returnButton.className = loginButton.className;
-                    returnButton.innerHTML = '<span>Revino în aplicația Panel</span>';
-                    loginButton.replaceWith(returnButton);
-                    document.getElementById('status-msg').textContent = 'Autentificarea a reușit. Se redeschide aplicația...';
-                    setTimeout(() => { window.location.href = appCallback; }, 250);
-                    return;
-                }
+    const hash = window.location.hash;
+    const query = new URLSearchParams(window.location.search);
 
-                if (accessToken) {
-                    // Curățăm URL-ul imediat să prevenim buclele
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                    setLoginStatus("🔄 Se inițiază autentificarea...");
-                    await processDiscordLogin(accessToken);
-                }
-            } else {
-                // Dacă nu suntem în timpul callback-ului, verificăm dacă utilizatorul are deja sesiune validă
-                const existingUser = localStorage.getItem('discord_user');
 
-                if (existingUser) {
-                    try {
-                        const parsed = JSON.parse(existingUser);
+    // Varianta veche Discord Implicit Flow
+    if (hash && hash.includes('access_token')) {
 
-                        if (parsed && parsed.discord_id) {
-                            window.location.href = getLoginDestination(parsed);
-                            return;
-                        }
-                    } catch (error) {
-                        console.error('Sesiune locală invalidă:', error);
-                        localStorage.clear();
-                    }
-                }
+        const params = new URLSearchParams(hash.substring(1));
+        const accessToken = params.get('access_token');
+
+        if(accessToken){
+            window.history.replaceState({}, document.title, window.location.pathname);
+            setLoginStatus("🔄 Se inițiază autentificarea...");
+            await processDiscordLogin(accessToken);
+            return;
+        }
+
+    }
+
+
+    // Varianta nouă Discord Code Flow
+    const code = query.get('code');
+
+    if(code){
+
+        console.log("CODE DISCORD PRIMIT:", code);
+
+        setLoginStatus("🔄 Cod Discord primit. Se verifică...");
+
+        // momentan doar verificăm că ajunge aici
+        return;
+
+    }
+
+
+    // sesiune existentă
+    const existingUser = localStorage.getItem('discord_user');
+
+    if(existingUser){
+
+        try {
+
+            const parsed = JSON.parse(existingUser);
+
+            if(parsed && parsed.discord_id){
+                window.location.href = getLoginDestination(parsed);
+                return;
             }
-        });
+
+        } catch(error){
+
+            console.error(error);
+            localStorage.clear();
+
+        }
+
+    }
+
+});
         function setLoginStatus(message) {
             const status = document.getElementById("status-msg");
 
