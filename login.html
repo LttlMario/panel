@@ -238,18 +238,53 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
     // Varianta nouă Discord Code Flow
-    const code = query.get('code');
+if(code){
 
-    if(code){
+    setLoginStatus("🔄 Se finalizează autentificarea...");
 
-        console.log("CODE DISCORD PRIMIT:", code);
 
-        setLoginStatus("🔄 Cod Discord primit. Se verifică...");
+    const exchange = await fetch(
+        `${SUPABASE_URL}/functions/v1/discord-oauth-exchange`,
+        {
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json",
+                apikey:SUPABASE_KEY
+            },
+            body:JSON.stringify({
+                code,
+                redirect_uri:REDIRECT_URI
+            })
+        }
+    );
 
-        // momentan doar verificăm că ajunge aici
-        return;
 
+    const tokenData = await exchange.json();
+
+
+    if(!tokenData.access_token){
+        throw new Error(
+            tokenData.error_description ||
+            "Nu s-a primit token Discord"
+        );
     }
+
+
+    window.history.replaceState(
+        {},
+        document.title,
+        window.location.pathname
+    );
+
+
+    await processDiscordLogin(
+        tokenData.access_token
+    );
+
+
+    return;
+
+}
 
 
     // sesiune existentă
