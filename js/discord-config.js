@@ -9,7 +9,7 @@ window.PANEL_DISCORD_CONFIG = Object.freeze({
     },
 
     // Discord principal folosit la autentificare
-    clientId: "1531023771211792384",
+    clientId: "1530859145459138601",
 
     scopes: [
         "identify",
