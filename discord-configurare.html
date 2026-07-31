@@ -176,40 +176,47 @@
     const rolesHost=document.getElementById('roles');
     rolesHost.innerHTML=roles.map(([name,level])=>`
     <div class="role-row">
+        <span class="role-level" title="Nivel acces">${level}</span>
 
-    <span class="role-level" title="Nivel acces">${level}</span>
+        <input 
+            id="panel_role_${level}" 
+            required 
+            value="${name}" 
+            placeholder="Denumire afișată în panel"
+            title="Denumire afișată în panel">
 
-    <input 
-    id="panel_role_${level}" 
-    required 
-    value="${name}" 
-    placeholder="Denumire afișată în panel" 
-    title="Denumire afișată în panel">
+        <input 
+            id="role_name_${level}" 
+            required 
+            value="${name}" 
+            placeholder="Nume rol Discord principal"
+            title="Nume rol Discord principal">
 
-    <input 
-    id="role_name_${level}" 
-    required 
-    value="${name}" 
-    placeholder="Nume rol Discord principal" 
-    title="Nume rol Discord principal">
+        <input 
+            id="role_${level}" 
+            required 
+            inputmode="numeric" 
+            placeholder="ID rol Discord principal"
+            title="ID rol Discord principal">
 
-    <input 
-    id="role_${level}" 
-    required 
-    inputmode="numeric" 
-    placeholder="ID rol Discord principal" 
-    title="ID rol Discord principal">
+    </div>
 
-    <input 
-    id="role_name_secondary_${level}" 
-    placeholder="Nume rol Discord secundar (opțional)" 
-    title="Nume rol Discord secundar">
+    <div class="role-secondary-row">
 
-    <input 
-    id="role_secondary_${level}" 
-    inputmode="numeric" 
-    placeholder="ID rol Discord secundar (opțional)" 
-    title="ID rol Discord secundar">
+        <span class="role-level secondary">
+            +
+        </span>
+
+        <input 
+            id="role_name_secondary_${level}"
+            placeholder="Nume rol Discord secundar (optional)"
+            title="Nume rol Discord secundar">
+
+        <input 
+            id="role_secondary_${level}"
+            inputmode="numeric"
+            placeholder="ID rol Discord secundar (optional)"
+            title="ID rol Discord secundar">
 
     </div>
     `).join('');
