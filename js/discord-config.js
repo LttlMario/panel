@@ -25,7 +25,7 @@ window.PANEL_DISCORD_CONFIG = Object.freeze({
             name: "Discord Principal",
             enabled: true,
 
-            clientId: "1531023771211792384",
+            clientId: "1530859145459138601",
 
             scopes: [
                 "identify",
