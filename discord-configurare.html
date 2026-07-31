@@ -13,8 +13,258 @@
   <link rel="stylesheet" href="css/global-footer.css">
   <script src="js/project-version.js"></script>
   <style>
-    *{box-sizing:border-box}.setup-form{display:grid;gap:18px}.setup-card{border:1px solid #1e293b;border-radius:18px;background:#0f172a;padding:20px}.setup-card h3{font-size:16px;font-weight:900;margin-bottom:5px}.setup-card>p{color:#94a3b8;font-size:12px;margin-bottom:16px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.field{display:grid;gap:6px}.field.full{grid-column:1/-1}.field label{font-size:11px;font-weight:800;color:#cbd5e1}.field input,.role-row input{width:100%;border:1px solid #334155;border-radius:10px;background:#020617;color:#f8fafc;padding:10px 12px;outline:none}.field input:focus,.role-row input:focus{border-color:#10b981}.role-row{display:grid;grid-template-columns:48px minmax(140px,1fr) minmax(160px,1.2fr) minmax(190px,1.5fr);gap:10px;align-items:center;margin-top:9px}.role-level{display:grid;place-items:center;height:40px;border-radius:10px;background:#064e3b;color:#6ee7b7;font-weight:900}.panel-role-name{color:#cbd5e1;font-size:12px;font-weight:800}.config-action{border:1px solid #10b981;border-radius:11px;background:#064e3b;color:#a7f3d0;padding:10px 14px;font-size:12px;font-weight:900;cursor:pointer;text-decoration:none;text-align:center}.config-action:hover{background:#065f46}.download-pack{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:11px}.download-pack .config-action{border-color:#475569;background:#172033;color:#cbd5e1}.download-pack .config-action:hover{border-color:#10b981;color:#a7f3d0}.migration-list{display:grid;gap:8px;margin:0;padding:0;list-style:none}.migration-list li{display:flex;gap:9px;align-items:flex-start;border:1px solid #334155;border-radius:11px;background:#020617;padding:10px 12px;color:#cbd5e1;font-size:12px}.migration-list b{color:#f8fafc}.security-note{margin-top:12px;border:1px solid #f59e0b55;border-radius:11px;background:#f59e0b12;padding:11px;color:#fcd34d;font-size:11px}.save-bar{position:sticky;bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid #334155;border-radius:15px;background:rgba(15,23,42,.94);padding:13px 15px;box-shadow:0 14px 35px rgba(0,0,0,.35);backdrop-filter:blur(12px)}#save-config{border:1px solid #10b981;border-radius:11px;background:#059669;color:white;padding:11px 18px;font-weight:900;cursor:pointer}#setup-status{font-size:12px;color:#94a3b8}@media(max-width:720px){.fields,.download-pack{grid-template-columns:1fr}.role-row{grid-template-columns:42px 1fr}.role-row .panel-role-name,.role-row input{grid-column:2}.setup-card{padding:15px}}
-  </style>
+*{box-sizing:border-box}
+
+.setup-form{
+    display:grid;
+    gap:18px
+}
+
+.setup-card{
+    border:1px solid #1e293b;
+    border-radius:18px;
+    background:#0f172a;
+    padding:20px
+}
+
+.setup-card h3{
+    font-size:16px;
+    font-weight:900;
+    margin-bottom:5px
+}
+
+.setup-card>p{
+    color:#94a3b8;
+    font-size:12px;
+    margin-bottom:16px
+}
+
+.fields{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:13px
+}
+
+.field{
+    display:grid;
+    gap:6px
+}
+
+.field.full{
+    grid-column:1/-1
+}
+
+.field label{
+    font-size:11px;
+    font-weight:800;
+    color:#cbd5e1
+}
+
+.field input,
+.role-row input,
+.role-secondary-row input{
+    width:100%;
+    border:1px solid #334155;
+    border-radius:10px;
+    background:#020617;
+    color:#f8fafc;
+    padding:10px 12px;
+    outline:none
+}
+
+.field input:focus,
+.role-row input:focus,
+.role-secondary-row input:focus{
+    border-color:#10b981
+}
+
+
+/* ROL PRINCIPAL */
+
+.role-row{
+    display:grid;
+    grid-template-columns:
+        48px 
+        minmax(140px,1fr) 
+        minmax(160px,1.2fr) 
+        minmax(190px,1.5fr);
+    gap:10px;
+    align-items:center;
+    margin-top:9px
+}
+
+
+/* ROL SECUNDAR */
+
+.role-secondary-row{
+    display:grid;
+    grid-template-columns:
+        48px
+        minmax(140px,1fr)
+        minmax(190px,1.5fr);
+    gap:10px;
+    align-items:center;
+    margin-top:6px;
+    margin-bottom:12px;
+}
+
+
+.role-level{
+    display:grid;
+    place-items:center;
+    height:40px;
+    border-radius:10px;
+    background:#064e3b;
+    color:#6ee7b7;
+    font-weight:900
+}
+
+
+.role-level.secondary{
+    background:#065f46;
+    color:#a7f3d0;
+}
+
+
+.panel-role-name{
+    color:#cbd5e1;
+    font-size:12px;
+    font-weight:800
+}
+
+
+.config-action{
+    border:1px solid #10b981;
+    border-radius:11px;
+    background:#064e3b;
+    color:#a7f3d0;
+    padding:10px 14px;
+    font-size:12px;
+    font-weight:900;
+    cursor:pointer;
+    text-decoration:none;
+    text-align:center
+}
+
+.config-action:hover{
+    background:#065f46
+}
+
+
+.download-pack{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:9px;
+    margin-top:11px
+}
+
+
+.download-pack .config-action{
+    border-color:#475569;
+    background:#172033;
+    color:#cbd5e1
+}
+
+
+.download-pack .config-action:hover{
+    border-color:#10b981;
+    color:#a7f3d0
+}
+
+
+.migration-list{
+    display:grid;
+    gap:8px;
+    margin:0;
+    padding:0;
+    list-style:none
+}
+
+
+.migration-list li{
+    display:flex;
+    gap:9px;
+    align-items:flex-start;
+    border:1px solid #334155;
+    border-radius:11px;
+    background:#020617;
+    padding:10px 12px;
+    color:#cbd5e1;
+    font-size:12px
+}
+
+
+.migration-list b{
+    color:#f8fafc
+}
+
+
+.security-note{
+    margin-top:12px;
+    border:1px solid #f59e0b55;
+    border-radius:11px;
+    background:#f59e0b12;
+    padding:11px;
+    color:#fcd34d;
+    font-size:11px
+}
+
+
+.save-bar{
+    position:sticky;
+    bottom:12px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    border:1px solid #334155;
+    border-radius:15px;
+    background:rgba(15,23,42,.94);
+    padding:13px 15px;
+    box-shadow:0 14px 35px rgba(0,0,0,.35);
+    backdrop-filter:blur(12px)
+}
+
+
+#save-config{
+    border:1px solid #10b981;
+    border-radius:11px;
+    background:#059669;
+    color:white;
+    padding:11px 18px;
+    font-weight:900;
+    cursor:pointer
+}
+
+
+#setup-status{
+    font-size:12px;
+    color:#94a3b8
+}
+
+
+@media(max-width:720px){
+
+    .fields,
+    .download-pack{
+        grid-template-columns:1fr
+    }
+
+    .role-row,
+    .role-secondary-row{
+        grid-template-columns:42px 1fr
+    }
+
+    .role-row .panel-role-name,
+    .role-row input,
+    .role-secondary-row input{
+        grid-column:2
+    }
+
+    .setup-card{
+        padding:15px
+    }
+}  </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex text-sm">
   <aside class="w-72 bg-slate-900 border-r border-slate-800 flex-col justify-between hidden md:flex">
