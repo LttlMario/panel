@@ -356,6 +356,7 @@
                 <label>Client ID</label>
                 <input
                     id="discord_client_id_secondary"
+                    readonly
                     inputmode="numeric"
                     placeholder="Lasă gol dacă nu este folosit">
             </div>
@@ -521,6 +522,9 @@
 
     const updateRedirectPreview=()=>{const base=document.getElementById('panel_public_url').value.trim().replace(/\/$/,'');document.getElementById('oauth_redirect_preview').value=base?`${base}/login.html`:''};
     document.getElementById('panel_public_url').addEventListener('input',updateRedirectPreview);
+    document.getElementById('discord_client_id_primary').addEventListener('input', event => {
+      document.getElementById('discord_client_id_secondary').value = event.target.value.trim();
+    });
     document.getElementById('test-pontaj-webhook').addEventListener('click',async()=>{const button=document.getElementById('test-pontaj-webhook'),status=document.getElementById('setup-status');button.disabled=true;status.textContent='Se testează webhook-ul de pontaj...';try{await sendPanelDiscord('pontaj',{embeds:[{title:'✅ Test webhook Pontaj',description:'Conexiunea dintre panel și canalul Discord funcționează.',color:3066993,timestamp:new Date().toISOString()}]});status.textContent='Webhook-ul de pontaj funcționează. Verifică mesajul în Discord.'}catch(error){status.textContent=`Test eșuat: ${error.message}`}finally{button.disabled=false}});
     async function load() {
 
@@ -555,6 +559,7 @@
         // Compatibilitate cu noua structură (Discord Principal)
         if (config.discord_client_id) {
             document.getElementById('discord_client_id_primary').value = config.discord_client_id;
+            document.getElementById('discord_client_id_secondary').value = config.discord_client_id;
         }
 
         if (config.guild_id) {
@@ -562,9 +567,7 @@
         }
 
         // Discord Secundar (va funcționa după modificarea backend-ului)
-        if (config.discord_client_id_secondary) {
-            document.getElementById('discord_client_id_secondary').value = config.discord_client_id_secondary;
-        }
+        // Discordul secundar foloseste automat aceeasi aplicatie OAuth.
 
         if (config.guild_id_secondary) {
             document.getElementById('guild_id_secondary').value = config.guild_id_secondary;
@@ -630,11 +633,13 @@
             document.getElementById('guild_id_primary').value.trim();
 
         // Discord Secundar (pregătit pentru viitor)
-        config.discord_client_id_secondary =
-            document.getElementById('discord_client_id_secondary').value.trim();
-
         config.guild_id_secondary =
             document.getElementById('guild_id_secondary').value.trim();
+
+        // Acelasi OAuth Client si acelasi bot sunt folosite pe ambele servere.
+        config.discord_client_id_secondary = config.guild_id_secondary
+            ? config.discord_client_id
+            : '';
 
         // Restul configurației
         config.panel_public_url =
@@ -678,8 +683,11 @@
         config.family_role_id =
             document.getElementById('role_3').value.trim();
 
+        // Webhook-ul Mecanicilor este de regula pe Discordul secundar.
+        // Un webhook poate mentiona numai roluri din propriul server.
         config.mechanics_role_id =
-            document.getElementById('role_1').value.trim();
+            document.getElementById('role_secondary_1').value.trim()
+            || document.getElementById('role_1').value.trim();
 
         const mappings = roles.map(([, level]) => ({
             discord_role_id:
