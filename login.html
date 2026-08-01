@@ -207,28 +207,45 @@
         document.getElementById('discord-login-btn').addEventListener('click', async () => {
             try {
                 const { data } = await supabaseClient.rpc('get_discord_oauth_config');
-                if (data?.[0]?.discord_client_id) CLIENT_ID = data[0].discord_client_id;
+                // Valoarea din baza de date nu suprascrie aplicatia OAuth locala.
+                // Guild-urile principal/secundar sunt independente de Client ID.
+                void data;
             } catch (_) {
                 // Configurația locală rămâne fallback pentru prima instalare.
             }
-            const discordAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=${encodeURIComponent(DISCORD_SCOPES)}`;
-            window.location.href = discordAuthUrl;
+            const oauthState = crypto.randomUUID();
+            sessionStorage.setItem('discord_oauth_state', oauthState);
+
+            const authParams = new URLSearchParams({
+                client_id: CLIENT_ID,
+                redirect_uri: REDIRECT_URI,
+                response_type: 'token',
+                scope: DISCORD_SCOPES,
+                state: oauthState
+            });
+
+            window.location.href = `https://discord.com/oauth2/authorize?${authParams.toString()}`;
         });
 
 document.addEventListener('DOMContentLoaded', async () => {
 
     const hash = window.location.hash;
-    const query = new URLSearchParams(window.location.search);
-
-
-    // Varianta veche Discord Implicit Flow
+    // Discord OAuth Implicit Flow returneaza tokenul in fragmentul URL.
     if (hash && hash.includes('access_token')) {
 
         const params = new URLSearchParams(hash.substring(1));
         const accessToken = params.get('access_token');
+        const returnedState = params.get('state');
+        const expectedState = sessionStorage.getItem('discord_oauth_state');
 
         if(accessToken){
             window.history.replaceState({}, document.title, window.location.pathname);
+            sessionStorage.removeItem('discord_oauth_state');
+
+            if (!expectedState || returnedState !== expectedState) {
+                setLoginStatus("Eroare autentificare: raspuns OAuth invalid.");
+                return;
+            }
             setLoginStatus("🔄 Se inițiază autentificarea...");
             await processDiscordLogin(accessToken);
             return;
@@ -238,53 +255,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
     // Varianta nouă Discord Code Flow
-if(code){
+    // Authorization Code Flow is intentionally not used by this static page.
+    // The configured login always requests response_type=token.
+    const code = null;
 
-    setLoginStatus("🔄 Se finalizează autentificarea...");
+    if(code){
 
+        console.log("CODE DISCORD PRIMIT:", code);
 
-    const exchange = await fetch(
-        `${SUPABASE_URL}/functions/v1/discord-oauth-exchange`,
-        {
-            method:"POST",
-            headers:{
-                "Content-Type":"application/json",
-                apikey:SUPABASE_KEY
-            },
-            body:JSON.stringify({
-                code,
-                redirect_uri:REDIRECT_URI
-            })
-        }
-    );
+        setLoginStatus("🔄 Cod Discord primit. Se verifică...");
 
+        // momentan doar verificăm că ajunge aici
+        return;
 
-    const tokenData = await exchange.json();
-
-
-    if(!tokenData.access_token){
-        throw new Error(
-            tokenData.error_description ||
-            "Nu s-a primit token Discord"
-        );
     }
-
-
-    window.history.replaceState(
-        {},
-        document.title,
-        window.location.pathname
-    );
-
-
-    await processDiscordLogin(
-        tokenData.access_token
-    );
-
-
-    return;
-
-}
 
 
     // sesiune existentă
