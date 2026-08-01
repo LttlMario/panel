@@ -244,9 +244,9 @@
         document.getElementById('discord-login-btn').addEventListener('click', async () => {
             try {
                 const { data } = await supabaseClient.rpc('get_discord_oauth_config');
-                // Configuratorul expune numai Client ID-ul OAuth principal.
-                // Client ID-ul secundar este stocat separat si nu poate prelua login-ul.
-                if (data?.[0]?.discord_client_id) CLIENT_ID = data[0].discord_client_id;
+                // Client ID-ul local este sursa sigura pentru autentificare.
+                // O valoare veche dintr-o migrare nu poate suprascrie aplicatia activa.
+                void data;
             } catch (_) {
                 // Configurația locală rămâne fallback pentru prima instalare.
             }
