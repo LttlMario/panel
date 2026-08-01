@@ -398,10 +398,13 @@
     </section>
         <section class="setup-card"><h3>Cele 7 roluri</h3><p>Nivelul de acces (1–7) rămâne stabil. Poți schimba separat denumirea afișată în panel, numele rolului Discord și ID-ul său.</p><div id="roles"></div></section>
         <section class="setup-card"><h3>Webhook-uri</h3><p>Valorile sunt păstrate în tabela privată și sunt accesibile numai funcțiilor administrative.</p><div class="fields">
-          <div class="field"><label>Anunțuri Familie / Birouri</label><input id="family_webhook_url" type="password" placeholder="Webhook pentru anunțurile familiei sau birourilor"></div><div class="field"><label>Anunțuri Angajați</label><input id="mechanics_webhook_url" type="password" placeholder="Webhook pentru anunțurile angajaților"></div>
-          <div class="field"><label>Pontaj / Loguri</label><input id="pontaj_webhook_url" type="password" placeholder="Webhook pentru pornire, pauză și oprire pontaj"><button class="config-action" id="test-pontaj-webhook" type="button">Testează webhook-ul salvat</button></div><div class="field"><label>Cereri / Absențe</label><input id="requests_webhook_url" type="password" placeholder="Webhook pentru învoiri, cereri și absențe"></div>
-          <div class="field"><label>Contracte</label><input id="contracts_webhook_url" type="password" placeholder="Webhook pentru contractele generate"></div><div class="field"><label>Marketplace</label><input id="marketplace_webhook_url" type="password" placeholder="Webhook pentru anunțurile Marketplace"></div>
-          <div class="field"><label>Black Market</label><input id="illegal_marketplace_webhook_url" type="password" placeholder="Webhook pentru anunțurile Black Market"></div>
+          <div class="field"><label>Anunțuri Familie / Birouri</label><input id="family_webhook_url" type="password" placeholder="Webhook pentru anunțurile familiei sau birourilor"><button class="config-action test-webhook" data-channel="family" data-label="Anunțuri Familie" type="button">Verifică Anunțuri Familie</button></div>
+          <div class="field"><label>Anunțuri Angajați / Mecanici</label><input id="mechanics_webhook_url" type="password" placeholder="Webhook pentru anunțurile angajaților"><button class="config-action test-webhook" data-channel="mechanics" data-label="Anunțuri Mecanici" type="button">Verifică Anunțuri Mecanici</button></div>
+          <div class="field"><label>Pontaj / Loguri</label><input id="pontaj_webhook_url" type="password" placeholder="Webhook pentru pornire, pauză și oprire pontaj"><button class="config-action test-webhook" data-channel="pontaj" data-label="Pontaj" type="button">Verifică Pontaj</button></div>
+          <div class="field"><label>Cereri / Absențe</label><input id="requests_webhook_url" type="password" placeholder="Webhook pentru învoiri, cereri și absențe"><button class="config-action test-webhook" data-channel="requests" data-label="Cereri / Absențe" type="button">Verifică Cereri</button></div>
+          <div class="field"><label>Contracte</label><input id="contracts_webhook_url" type="password" placeholder="Webhook pentru contractele generate"><button class="config-action test-webhook" data-channel="contracts" data-label="Contracte" type="button">Verifică Contracte</button></div>
+          <div class="field"><label>Marketplace</label><input id="marketplace_webhook_url" type="password" placeholder="Webhook pentru anunțurile Marketplace"><button class="config-action test-webhook" data-channel="marketplace" data-label="Marketplace" type="button">Verifică Marketplace</button></div>
+          <div class="field"><label>Black Market</label><input id="illegal_marketplace_webhook_url" type="password" placeholder="Webhook pentru anunțurile Black Market"><button class="config-action test-webhook" data-channel="illegal_marketplace" data-label="Black Market" type="button">Verifică Black Market</button></div>
         </div></section>
         <section class="setup-card"><h3>Ce mai trebuie făcut la mutarea Supabase</h3><p>Interfața poate pregăti datele publice, însă un site GitHub Pages nu poate instala singur baza sau funcțiile fără cheia secretă de administrator.</p><ul class="migration-list"><li>1️⃣ <span><b>Rulează schema completă:</b> <code>supabase/setup-complet-baza-de-date.sql</code>, apoi migrarea de reparare a pontajelor.</span></li><li>2️⃣ <span><b>Publică cele 5 Edge Functions:</b> sync-discord-role, manage-discord-config, manage-community-posts, send-discord-notification și close-expired-shifts.</span></li><li>3️⃣ <span><b>Configurează secretele Edge Functions:</b> SUPABASE_SERVICE_ROLE_KEY (sau secret key), DISCORD_GUILD_ID și CRON_SECRET.</span></li><li>4️⃣ <span><b>Încarcă pe GitHub</b> fișierul <code>js/supabase-config.js</code> descărcat mai sus.</span></li><li>5️⃣ <span><b>Deschide din nou configuratorul</b> pe noul panel și salvează rolurile, webhook-urile, Guild ID-ul și Client ID-ul.</span></li><li>6️⃣ <span><b>Discord Developer Portal:</b> adaugă URL-ul OAuth Redirect afișat mai sus.</span></li></ul></section>
         <section class="setup-card"><h3>Verificarea sistemului</h3><p>După salvare, rulează diagnosticul complet pentru Supabase, Discord, webhook-uri, Edge Functions și fișierele publicate.</p><a class="config-action" href="diagnostic.html">Deschide Verificare sistem</a></section>
@@ -525,7 +528,30 @@
     document.getElementById('discord_client_id_primary').addEventListener('input', event => {
       document.getElementById('discord_client_id_secondary').value = event.target.value.trim();
     });
-    document.getElementById('test-pontaj-webhook').addEventListener('click',async()=>{const button=document.getElementById('test-pontaj-webhook'),status=document.getElementById('setup-status');button.disabled=true;status.textContent='Se testează webhook-ul de pontaj...';try{await sendPanelDiscord('pontaj',{embeds:[{title:'✅ Test webhook Pontaj',description:'Conexiunea dintre panel și canalul Discord funcționează.',color:3066993,timestamp:new Date().toISOString()}]});status.textContent='Webhook-ul de pontaj funcționează. Verifică mesajul în Discord.'}catch(error){status.textContent=`Test eșuat: ${error.message}`}finally{button.disabled=false}});
+    document.querySelectorAll('.test-webhook').forEach(button => {
+      button.addEventListener('click', async () => {
+        const status = document.getElementById('setup-status');
+        const channel = button.dataset.channel;
+        const label = button.dataset.label;
+        button.disabled = true;
+        status.textContent = `Se verifică ${label}...`;
+        try {
+          await sendPanelDiscord(channel, {
+            embeds: [{
+              title: `✅ Verificare ${label}`,
+              description: 'Conexiunea dintre configurator, Supabase și canalul Discord funcționează.',
+              color: 3066993,
+              timestamp: new Date().toISOString()
+            }]
+          });
+          status.textContent = `${label}: conexiune verificată. Mesajul de test a fost trimis în Discord.`;
+        } catch (error) {
+          status.textContent = `${label}: verificare eșuată — ${error.message}`;
+        } finally {
+          button.disabled = false;
+        }
+      });
+    });
     async function load() {
 
     try {

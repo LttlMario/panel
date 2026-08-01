@@ -539,6 +539,44 @@
             }
         });
     </script>
+    <script>
+      // Completeaza automat galeria cu toate imaginile 1.png - 52.png.
+      // Cardurile existente isi pastreaza titlurile si descrierile originale.
+      document.addEventListener('DOMContentLoaded', () => {
+        const gallery = document.getElementById('galleryGrid');
+        if (!gallery) return;
+        const existing = new Map();
+        gallery.querySelectorAll('.gallery-card').forEach(card => {
+          const image = card.querySelector('img[src^="img/"]');
+          const match = image?.getAttribute('src')?.match(/img\/(\d+)\.png$/i);
+          if (match) existing.set(Number(match[1]), card);
+        });
+
+        for (let number = 1; number <= 52; number++) {
+          if (!existing.has(number)) {
+            const title = `Craft Mecanic ${number}`;
+            const description = `Imaginea ${number} din galeria completă Craft Mechanics.`;
+            const card = document.createElement('div');
+            card.className = 'gallery-card bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col transition hover:-translate-y-1 hover:border-emerald-500/50 shadow-lg';
+            card.dataset.title = title;
+            card.dataset.desc = description;
+            card.innerHTML = `
+              <div class="w-full h-48 bg-black relative overflow-hidden">
+                <img src="img/${number}.png" alt="${title}" class="w-full h-full object-cover transition duration-300 hover:scale-105">
+                <button class="zoom-btn" type="button" title="Mărește imaginea">🔍</button>
+              </div>
+              <div class="p-5 flex flex-col gap-2 flex-1">
+                <div class="font-semibold text-slate-100 text-base">${title}</div>
+                <div class="text-xs text-slate-400 leading-relaxed">${description}</div>
+              </div>`;
+            card.querySelector('.zoom-btn').addEventListener('click', () => openModal(`${number}.png`, title, description));
+            existing.set(number, card);
+          }
+        }
+
+        [...existing.entries()].sort((a, b) => a[0] - b[0]).forEach(([, card]) => gallery.appendChild(card));
+      });
+    </script>
     <script src="js/global-footer.js"></script>
 </body>
 </html>
