@@ -2,6 +2,8 @@ create table if not exists public.discord_panel_config (
   id smallint primary key default 1 check (id = 1),
   discord_client_id text not null,
   guild_id text not null,
+  discord_client_id_secondary text,
+  guild_id_secondary text,
   panel_public_url text not null,
   family_role_id text,
   mechanics_role_id text,

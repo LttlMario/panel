@@ -4,6 +4,8 @@
 create table if not exists public.discord_role_mappings (
   discord_role_id text primary key,
   discord_role_name text not null,
+  discord_role_id_secondary text,
+  discord_role_name_secondary text,
   panel_role text not null,
   permission_level smallint not null check (permission_level between 1 and 5),
   priority smallint not null default 0,

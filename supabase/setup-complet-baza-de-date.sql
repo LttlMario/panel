@@ -283,6 +283,8 @@ create index if not exists illegal_locations_map_category_idx on public.illegal_
 create table if not exists public.discord_role_mappings (
   discord_role_id text primary key,
   discord_role_name text not null,
+  discord_role_id_secondary text,
+  discord_role_name_secondary text,
   panel_role text not null,
   permission_level smallint not null check(permission_level between 1 and 7),
   priority smallint not null default 0,
@@ -319,11 +321,23 @@ create table if not exists public.community_poll_votes(id uuid primary key defau
 create table if not exists public.community_reactions(id uuid primary key default gen_random_uuid(),post_id uuid not null references public.community_posts(id) on delete cascade,user_discord_id text not null,reaction text not null check(reaction in('👍','❤️','✅','🤔')),created_at timestamptz not null default now(),unique(post_id,user_discord_id,reaction));
 
 create table if not exists public.discord_panel_config (
-  id smallint primary key default 1 check(id=1),discord_client_id text not null,guild_id text not null,panel_public_url text not null,
+  id smallint primary key default 1 check(id=1),discord_client_id text not null,guild_id text not null,
+  discord_client_id_secondary text,guild_id_secondary text,panel_public_url text not null,
+  organization_name text,organization_code text,organization_description text,organization_logo text,organization_banner text,
   family_role_id text,mechanics_role_id text,family_webhook_url text,mechanics_webhook_url text,pontaj_webhook_url text,
   requests_webhook_url text,contracts_webhook_url text,marketplace_webhook_url text,illegal_marketplace_webhook_url text,
   updated_by_discord_id text,updated_at timestamptz not null default now()
 );
+
+alter table public.discord_panel_config add column if not exists discord_client_id_secondary text;
+alter table public.discord_panel_config add column if not exists guild_id_secondary text;
+alter table public.discord_panel_config add column if not exists organization_name text;
+alter table public.discord_panel_config add column if not exists organization_code text;
+alter table public.discord_panel_config add column if not exists organization_description text;
+alter table public.discord_panel_config add column if not exists organization_logo text;
+alter table public.discord_panel_config add column if not exists organization_banner text;
+alter table public.discord_role_mappings add column if not exists discord_role_id_secondary text;
+alter table public.discord_role_mappings add column if not exists discord_role_name_secondary text;
 
 create or replace function public.get_discord_oauth_config()
 returns table(discord_client_id text) language sql stable security definer set search_path=''

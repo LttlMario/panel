@@ -36,14 +36,20 @@ Deno.serve(async (request) => {
     }
 
     const supabase = createClient(Deno.env.get('SUPABASE_URL')!, getServiceKey());
-    const { data: savedConfig } = await supabase
-      .from('discord_panel_config')
-      .select('guild_id')
-      .eq('id', 1)
-      .maybeSingle();
-    const guildId = savedConfig?.guild_id || Deno.env.get('DISCORD_GUILD_ID');
-    if (!guildId) {
-      throw new Error('Secretul DISCORD_GUILD_ID nu este configurat.');
+    const { data: savedConfig, error: configError } = await supabase
+          .from('discord_panel_config')
+          .select('guild_id,guild_id_secondary')
+          .eq('id', 1)
+          .maybeSingle();
+    if (configError) throw configError;
+
+    const guildIds = [...new Set([
+      savedConfig?.guild_id,
+      savedConfig?.guild_id_secondary
+    ].filter((guildId): guildId is string => typeof guildId === 'string' && guildId.trim().length > 0))];
+
+    if (!guildIds.length) {
+      throw new Error('Nu există niciun server Discord configurat.');
     }
 
     const discordHeaders = { Authorization: `Bearer ${access_token}` };
@@ -52,37 +58,106 @@ Deno.serve(async (request) => {
       return new Response(JSON.stringify({ error: 'Sesiunea Discord nu mai este validă.' }), { status: 401, headers: corsHeaders });
     }
     const discordUser = await userResponse.json();
+    const primaryBotToken = Deno.env.get('DISCORD_BOT_TOKEN')?.trim();
+    const secondaryBotToken = Deno.env.get('DISCORD_SECONDARY_BOT_TOKEN')?.trim();
 
-    const memberResponse = await fetch(
-      `https://discord.com/api/v10/users/@me/guilds/${guildId}/member`,
-      { headers: discordHeaders },
-    );
-
-    // Dacă utilizatorul nu este pe server,
-    // îl tratăm ca Vizitator (Guest).
     let member: any = null;
-    let memberRoleIds = new Set<string>();
+    const memberRoleIds = new Set<string>();
+    const guildResults: Array<{ guild_id: string; status: number; roles: string[] }> = [];
 
-    if (memberResponse.ok) {
-      member = await memberResponse.json();
-      memberRoleIds = new Set<string>(member.roles ?? []);
-}
+    for (const guildId of guildIds) {
+
+      const memberResponse = await fetch(
+        `https://discord.com/api/v10/users/@me/guilds/${guildId}/member`,
+        { headers: discordHeaders },
+      );
+
+      if (memberResponse.ok) {
+        let guildMember = await memberResponse.json();
+
+        // Daca tokenul OAuth nu livreaza rolurile, citim acelasi membru direct
+        // prin botul instalat in server. Tokenurile botilor raman doar in
+        // Supabase Edge Function Secrets.
+        if (!Array.isArray(guildMember.roles) || guildMember.roles.length === 0) {
+          const botToken = guildId === savedConfig?.guild_id_secondary
+            ? secondaryBotToken || primaryBotToken
+            : primaryBotToken;
+
+          if (botToken) {
+            const botMemberResponse = await fetch(
+              `https://discord.com/api/v10/guilds/${guildId}/members/${discordUser.id}`,
+              { headers: { Authorization: `Bot ${botToken}` } },
+            );
+
+            if (botMemberResponse.ok) {
+              guildMember = await botMemberResponse.json();
+              console.log('Roluri citite prin bot pentru guild:', guildId);
+            } else {
+              console.warn(
+                'Botul nu poate citi membrul pentru guild:',
+                guildId,
+                'status:',
+                botMemberResponse.status,
+              );
+            }
+          } else {
+            console.warn('Lipseste tokenul botului pentru guild:', guildId);
+          }
+        }
+        if (!member) member = guildMember;
+
+        const roles = Array.isArray(guildMember.roles)
+          ? guildMember.roles.filter((role: unknown): role is string => typeof role === 'string')
+          : [];
+
+        for (const roleId of roles) memberRoleIds.add(roleId);
+        guildResults.push({ guild_id: guildId, status: memberResponse.status, roles });
+        console.log('Discord guild verificat:', guildId, 'roluri:', roles);
+      } else {
+        guildResults.push({ guild_id: guildId, status: memberResponse.status, roles: [] });
+        console.warn('Discord guild indisponibil:', guildId, 'status:', memberResponse.status);
+      }
+
+    }
 
     const { data: mappings, error: mappingsError } = await supabase
       .from('discord_role_mappings')
-      .select('discord_role_id, panel_role, permission_level, priority')
+        .select(`
+        discord_role_id,
+        discord_role_id_secondary,
+        panel_role,
+        permission_level,
+        priority
+        `)
       .eq('enabled', true)
       .order('permission_level', { ascending: false })
       .order('priority', { ascending: false });
     if (mappingsError) throw mappingsError;
 
-    const matchedRole = (mappings ?? []).find((mapping) => memberRoleIds.has(mapping.discord_role_id));
+    const matchedRole = (mappings ?? [])
+        .filter((mapping) =>
+            memberRoleIds.has(mapping.discord_role_id) ||
+            (
+                mapping.discord_role_id_secondary &&
+                memberRoleIds.has(mapping.discord_role_id_secondary)
+            )
+        )
+        .sort((a,b)=>b.permission_level - a.permission_level)[0];
     const panelRole = matchedRole?.panel_role ?? 'Vizitator';
     const avatar = discordAvatarUrl(discordUser.id, discordUser.avatar);
+    const permissionLevel = matchedRole?.permission_level ?? 0;
+    console.log(
+      'Rol final panel:',
+      panelRole,
+      'nivel:',
+      permissionLevel,
+      'utilizator:',
+      discordUser.id,
+    );
+
     const userData = {
       discord_id: discordUser.id,
       username: discordUser.username,
-      // La fiecare autentificare rescriem numele din profilul membrului serverului Discord.
       display_name:
         member?.nick?.trim()
         || member?.user?.global_name?.trim()
@@ -93,6 +168,7 @@ Deno.serve(async (request) => {
       avatar,
       role: panelRole,
       default_role: panelRole,
+      permission_level: permissionLevel,
     };
 
     const { data: savedUser, error: saveError } = await supabase
@@ -102,10 +178,10 @@ Deno.serve(async (request) => {
       .single();
     if (saveError) throw saveError;
 
-    const permissionLevel = matchedRole?.permission_level ?? 0;
     return new Response(JSON.stringify({
       user: { ...savedUser, permission_level: permissionLevel },
       permission_level: permissionLevel,
+      guilds: guildResults,
     }), { headers: corsHeaders });
   } catch (error) {
     console.error('Discord role sync failed:', error);
