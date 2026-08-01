@@ -1,21 +1,19 @@
-// Configurație publică Discord OAuth
+// Configuratie publica pentru autentificarea Discord.
+// O singura aplicatie OAuth autentifica utilizatorul. Serverele din care se
+// citesc rolurile sunt configurate separat in Supabase: guild_id si
+// guild_id_secondary din discord_panel_config.
 
 window.PANEL_DISCORD_CONFIG = Object.freeze({
-
-    organization: {
+    organization: Object.freeze({
         id: "familia-es-todo",
         name: "Familia Es Todo"
-    },
+    }),
 
+    clientId: "1531023771211792384",
 
-    // SINGURA APLICAȚIE CARE FACE LOGIN
-    clientId: "1530859145459138601",
-
-
-    scopes: [
+    scopes: Object.freeze([
         "identify",
         "email",
         "guilds.members.read"
-    ]
-
+    ])
 });
